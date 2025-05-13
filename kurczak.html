@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Kurczaka Nastrojowego</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding-top: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+        .slider-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            -webkit-appearance: none; /* Override default CSS */
+            appearance: none;
+        }
+        /* Thumb for Chrome, Opera, Safari, Edge */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3498db;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        /* Thumb for Firefox */
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #3498db;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .output-value {
+            font-weight: bold;
+            margin-left: 10px;
+            color: #3498db;
+            background-color: #eaf2f8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        #chicken-display {
+            margin-top: 30px;
+            text-align: center;
+        }
+        #chicken-image-container {
+            width: 250px;
+            height: 250px;
+            border: 3px dashed #bdc3c7;
+            background-color: #ecf0f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px auto;
+            border-radius: 10px;
+            overflow: hidden; /* To ensure image fits well */
+        }
+        #chicken-image {
+            max-width: 100%;
+            max-height: 100%;
+            display: block; /* Removes extra space below image */
+        }
+        #chicken-mood-text {
+            margin-top: 10px;
+            font-style: italic;
+            color: #2c3e50;
+            min-height: 40px;
+            font-size: 1.1em;
+            padding: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Jak się dzisiaj czuje Twój kurczak?</h1>
+
+        <div class="slider-group">
+            <label for="radosc">Radość: <span id="radosc-val" class="output-value">3</span></label>
+            <input type="range" id="radosc" name="radosc" min="1" max="5" value="3">
+        </div>
+
+        <div class="slider-group">
+            <label for="smutek">Smutek: <span id="smutek-val" class="output-value">1</span></label>
+            <input type="range" id="smutek" name="smutek" min="1" max="5" value="1">
+        </div>
+
+        <div class="slider-group">
+            <label for="energia">Energia: <span id="energia-val" class="output-value">3</span></label>
+            <input type="range" id="energia" name="energia" min="1" max="5" value="3">
+        </div>
+
+        <div class="slider-group">
+            <label for="milosc">Miłość: <span id="milosc-val" class="output-value">3</span></label>
+            <input type="range" id="milosc" name="milosc" min="1" max="5" value="3">
+        </div>
+
+        <div id="chicken-display">
+            <div id="chicken-image-container">
+                <img id="chicken-image" src="https://placehold.co/250x250/E0E0E0/333333?text=Kurczak+Czeka" alt="Obrazek kurczaka">
+            </div>
+            <p id="chicken-mood-text">Przesuń suwaki, aby zobaczyć nastrój kurczaka!</p>
+        </div>
+    </div>
+
+    <script>
+        // Elementy suwaków
+        const radoscSlider = document.getElementById('radosc');
+        const smutekSlider = document.getElementById('smutek');
+        const energiaSlider = document.getElementById('energia');
+        const miloscSlider = document.getElementById('milosc');
+
+        // Elementy wyświetlające wartości suwaków
+        const radoscValText = document.getElementById('radosc-val');
+        const smutekValText = document.getElementById('smutek-val');
+        const energiaValText = document.getElementById('energia-val');
+        const miloscValText = document.getElementById('milosc-val');
+
+        // Elementy wyświetlające kurczaka
+        const chickenImage = document.getElementById('chicken-image');
+        const chickenMoodText = document.getElementById('chicken-mood-text');
+
+        // Placeholder image URLs - zamień na własne ścieżki do obrazków
+        // Komentarze w języku polskim dla jasności
+        const chickenImageSources = {
+            radosny: 'https://placehold.co/250x250/FFEB3B/333333?text=Radosny!', // Żółty
+            bardzo_radosny: 'https://placehold.co/250x250/FBC02D/333333?text=Super+Radosny!', // Ciemnożółty
+            smutny: 'https://placehold.co/250x250/B0BEC5/FFFFFF?text=Smutny...', // Szary-niebieski
+            bardzo_smutny: 'https://placehold.co/250x250/78909C/FFFFFF?text=Bardzo+Smutny', // Ciemnoszary-niebieski
+            energetyczny: 'https://placehold.co/250x250/FF9800/FFFFFF?text=Pełen+Energii!', // Pomarańczowy
+            podekscytowany: 'https://placehold.co/250x250/FF5722/FFFFFF?text=Podekscytowany!!!', // Głęboki pomarańczowy
+            zakochany: 'https://placehold.co/250x250/E91E63/FFFFFF?text=Zakochany+%3C3', // Różowy
+            blogi_zakochany: 'https://placehold.co/250x250/F48FB1/333333?text=Błogo+Zakochany', // Jasnoróżowy
+            zly_sfrustrowany: 'https://placehold.co/250x250/D32F2F/FFFFFF?text=Zły!+Grrr!', // Czerwony
+            spiacy: 'https://placehold.co/250x250/90CAF9/333333?text=Śpiący+Zzz', // Jasnoniebieski
+            znudzony: 'https://placehold.co/250x250/E0E0E0/333333?text=Znudzony', // Jasnoszary
+            spokojny: 'https://placehold.co/250x250/A5D6A7/333333?text=Spokojny', // Jasnozielony
+            neutralny: 'https://placehold.co/250x250/CFD8DC/333333?text=Neutralny', // Szary
+            zrelaksowany: 'https://placehold.co/250x250/C5E1A5/333333?text=Zrelaksowany' // Limonkowy
+        };
+
+        // Funkcja do aktualizacji wyświetlanej wartości suwaka
+        function updateSliderValue(slider, outputElement) {
+            outputElement.textContent = slider.value;
+        }
+
+        // Główna funkcja określająca nastrój kurczaka
+        function determineChickenMood() {
+            const radosc = parseInt(radoscSlider.value);
+            const smutek = parseInt(smutekSlider.value);
+            const energia = parseInt(energiaSlider.value);
+            const milosc = parseInt(miloscSlider.value);
+
+            let moodDescription = "Kurczak jest ";
+            let currentChickenImgKey = 'neutralny'; // Domyślny obrazek
+
+            // Złożona logika określająca nastrój kurczaka
+            // Priorytet dla silnych negatywnych emocji
+            if (smutek >= 4) {
+                if (energia <= 2) {
+                    currentChickenImgKey = 'bardzo_smutny';
+                    moodDescription += "bardzo, bardzo smutny i przygnębiony. Potrzebuje przytulenia.";
+                } else if (energia >= 4 && radosc <= 2) {
+                    currentChickenImgKey = 'zly_sfrustrowany';
+                    moodDescription += "sfrustrowany i zły! Lepiej dać mu chwilę spokoju.";
+                } else {
+                    currentChickenImgKey = 'smutny';
+                    moodDescription += "smutny. Coś go trapi.";
+                }
+            } 
+            // Potem silne pozytywne emocje
+            else if (radosc >= 4) {
+                if (energia >= 4) {
+                    currentChickenImgKey = 'podekscytowany';
+                    moodDescription += "niesamowicie podekscytowany i pełen energii! Gotowy na przygody!";
+                } else if (milosc >= 4) {
+                    currentChickenImgKey = 'blogi_zakochany';
+                    moodDescription += "błogo zakochany i szczęśliwy. Świat wiruje wokół miłości!";
+                } else {
+                    currentChickenImgKey = 'bardzo_radosny';
+                    moodDescription += "bardzo radosny! Dzień jest piękny!";
+                }
+            } else if (milosc >= 4) {
+                 if (radosc >=3) { // Jeśli jest też trochę radości
+                    currentChickenImgKey = 'blogi_zakochany';
+                    moodDescription += "szczęśliwie zakochany i radosny.";
+                 } else {
+                    currentChickenImgKey = 'zakochany';
+                    moodDescription += "zakochany i myśli o swojej sympatii.";
+                 }
+            } 
+            // Stany związane z energią
+            else if (energia >= 4) {
+                if (radosc >= 3) { // Jeśli jest też trochę radości
+                    currentChickenImgKey = 'energetyczny';
+                    moodDescription += "pełen energii i entuzjazmu!";
+                } else { // Sama energia może oznaczać niepokój
+                    currentChickenImgKey = 'energetyczny'; // Można by dodać np. 'niespokojny'
+                    moodDescription += "pełen energii, ale może trochę niespokojny.";
+                }
+            } 
+            // Stany niskiej energii lub braku silnych emocji
+            else if (energia <= 1 && smutek <= 2 && radosc <=2 && milosc <= 2) { // Wszystkie inne uczucia też niskie
+                currentChickenImgKey = 'spiacy';
+                moodDescription += "bardzo śpiący. Czas na drzemkę.";
+            } else if (radosc === 1 && smutek === 1 && energia <= 2 && milosc === 1) { // Wszystko na minimum
+                currentChickenImgKey = 'znudzony';
+                moodDescription += "trochę znudzony. Szuka czegoś ciekawego do roboty.";
+            } 
+            // Pozytywne, ale spokojne stany
+            else if (radosc >= 3 && smutek <= 2 && energia <= 3 && milosc >=2) { // Ogólnie pozytywny, ale nie euforyczny
+                 currentChickenImgKey = 'spokojny';
+                 moodDescription += "spokojny i zadowolony z życia.";
+            }
+            else if (radosc <=2 && smutek <=2 && energia <=2 && milosc <=2 && (radosc > 1 || smutek > 1 || energia > 1 || milosc > 1) ) { // Niskie wartości, ale nie minimalne
+                 currentChickenImgKey = 'zrelaksowany';
+                 moodDescription += "zrelaksowany i odpoczywa sobie.";
+            }
+            // Domyślny stan, jeśli żadne z powyższych nie pasuje
+            else { 
+                currentChickenImgKey = 'neutralny';
+                moodDescription += "w neutralnym nastroju, obserwuje otoczenie.";
+            }
+
+            // Aktualizacja obrazka i tekstu
+            chickenImage.src = chickenImageSources[currentChickenImgKey];
+            chickenImage.alt = `Kurczak ${currentChickenImgKey.replace('_', ' ')}`; // np. Kurczak bardzo radosny
+            chickenMoodText.textContent = moodDescription;
+        }
+
+        // Funkcja do inicjalizacji i pierwszej aktualizacji
+        function setupAndUpdate() {
+            updateSliderValue(radoscSlider, radoscValText);
+            updateSliderValue(smutekSlider, smutekValText);
+            updateSliderValue(energiaSlider, energiaValText);
+            updateSliderValue(miloscSlider, miloscValText);
+            determineChickenMood(); // Wywołanie funkcji, aby ustawić początkowy nastrój
+        }
+
+        // Dodanie Event Listenerów do suwaków
+        // Każda zmiana na suwaku aktualizuje jego wartość i nastrój kurczaka
+        radoscSlider.addEventListener('input', () => {
+            updateSliderValue(radoscSlider, radoscValText);
+            determineChickenMood();
+        });
+        smutekSlider.addEventListener('input', () => {
+            updateSliderValue(smutekSlider, smutekValText);
+            determineChickenMood();
+        });
+        energiaSlider.addEventListener('input', () => {
+            updateSliderValue(energiaSlider, energiaValText);
+            determineChickenMood();
+        });
+        miloscSlider.addEventListener('input', () => {
+            updateSliderValue(miloscSlider, miloscValText);
+            determineChickenMood();
+        });
+
+        // Inicjalne ustawienie wartości i nastroju kurczaka po załadowaniu strony
+        window.onload = setupAndUpdate;
+
+    </script>
+</body>
+</html>
