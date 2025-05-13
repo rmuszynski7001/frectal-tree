@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Fractal Tree</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f9ff; /* Light blue sky */
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+        }
+        canvas {
+            display: block;
+            margin: 20px auto;
+            background-color: #e0f2fe; /* Lighter sky for canvas */
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 100%;
+            height: auto;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        label {
+            font-size: 0.9rem;
+            color: #374151; /* Gray-700 */
+        }
+        input[type="range"] {
+            width: 120px;
+            cursor: pointer;
+        }
+        input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0; /* Remove default padding for better appearance */
+        }
+        button {
+            background-color: #2563eb; /* Blue-600 */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #1d4ed8; /* Blue-700 */
+        }
+        .info-text {
+            font-size: 0.85rem;
+            color: #4b5563; /* Gray-600 */
+            margin-top: 15px;
+        }
+        #message-box {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .success {
+            background-color: #d1fae5; /* Green-100 */
+            color: #065f46; /* Green-800 */
+        }
+        .error {
+            background-color: #fee2e2; /* Red-100 */
+            color: #991b1b; /* Red-800 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Interactive Fractal Tree</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="angle">Branch Angle (&deg;): <span id="angleValue">45</span></label>
+                <input type="range" id="angle" min="10" max="90" value="45">
+            </div>
+            <div class="control-group">
+                <label for="depth">Growth Depth: <span id="depthValue">9</span></label>
+                <input type="range" id="depth" min="1" max="12" value="9">
+            </div>
+            <div class="control-group">
+                <label for="lengthFactor">Length Factor: <span id="lengthFactorValue">0.75</span></label>
+                <input type="range" id="lengthFactor" min="0.5" max="0.9" step="0.01" value="0.75">
+            </div>
+             <div class="control-group">
+                <label for="trunkColor">Trunk Color:</label>
+                <input type="color" id="trunkColor" value="#8B4513"> </div>
+            <div class="control-group">
+                <label for="leafColor">Leaf Color:</label>
+                <input type="color" id="leafColor" value="#228B22"> </div>
+        </div>
+
+        <button id="drawButton">Grow Tree</button>
+        <canvas id="treeCanvas"></canvas>
+        <div id="message-box" role="alert"></div>
+        <p class="info-text">Adjust the sliders and colors, then click "Grow Tree" to see the changes. The tree is drawn using a recursive algorithm, simulating natural branching.</p>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const canvas = document.getElementById('treeCanvas');
+        const ctx = canvas.getContext('2d');
+        const drawButton = document.getElementById('drawButton');
+        const angleSlider = document.getElementById('angle');
+        const depthSlider = document.getElementById('depth');
+        const lengthFactorSlider = document.getElementById('lengthFactor');
+        const trunkColorPicker = document.getElementById('trunkColor');
+        const leafColorPicker = document.getElementById('leafColor');
+
+        // Value display elements
+        const angleValueSpan = document.getElementById('angleValue');
+        const depthValueSpan = document.getElementById('depthValue');
+        const lengthFactorValueSpan = document.getElementById('lengthFactorValue');
+        const messageBox = document.getElementById('message-box');
+
+        let currentAngle = parseFloat(angleSlider.value);
+        let currentDepth = parseInt(depthSlider.value);
+        let currentLengthFactor = parseFloat(lengthFactorSlider.value);
+        let currentTrunkColor = trunkColorPicker.value;
+        let currentLeafColor = leafColorPicker.value;
+
+        // Function to set canvas size (responsive)
+        function resizeCanvas() {
+            const containerWidth = canvas.parentElement.clientWidth * 0.9; // 90% of container width
+            const aspectRatio = 1; // Square canvas, or adjust as needed (e.g., 4/3)
+            
+            canvas.width = Math.min(containerWidth, 600); // Max width of 600px
+            canvas.height = canvas.width / aspectRatio;
+
+            // Redraw tree if it has been drawn before
+            if (canvas.dataset.drawn === "true") {
+                 drawTree();
+            }
+        }
+
+        // Function to draw a branch
+        // (startX, startY): starting coordinates of the branch
+        // length: length of the current branch
+        // angle: angle of the current branch (in radians)
+        // depth: current recursion depth
+        // initialBranch: boolean to indicate if it's the first segment of a branch (for color)
+        function drawBranch(startX, startY, length, angle, depth, initialBranch = true) {
+            if (depth === 0) {
+                // Draw a 'leaf' at the end of the smallest branches
+                ctx.beginPath();
+                ctx.arc(startX, startY, 3, 0, Math.PI * 2); // Small circle for leaf
+                ctx.fillStyle = currentLeafColor;
+                ctx.fill();
+                return;
+            }
+
+            // Calculate end point of the branch
+            const endX = startX + length * Math.cos(angle);
+            const endY = startY + length * Math.sin(angle);
+
+            // Set branch properties
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            
+            // Thicker branches at the base, thinner towards the tips
+            ctx.lineWidth = depth * 0.5 + 0.5; 
+            ctx.strokeStyle = currentTrunkColor;
+            ctx.stroke();
+
+            // Recursive calls for next branches
+            // Branch 1: Turns left by 'branchAngle'
+            drawBranch(endX, endY, length * currentLengthFactor, angle - (currentAngle * Math.PI / 180), depth - 1, false);
+            // Branch 2: Turns right by 'branchAngle'
+            drawBranch(endX, endY, length * currentLengthFactor, angle + (currentAngle * Math.PI / 180), depth - 1, false);
+            
+            // Optional: Add a third, slightly varied middle branch for more density
+            if (depth > 2 && Math.random() < 0.3) { // Add with some probability
+                 drawBranch(endX, endY, length * currentLengthFactor * 0.8, angle + (Math.random() - 0.5) * 0.2, depth - 1, false);
+            }
+        }
+
+        // Main function to draw the entire tree
+        function drawTree() {
+            try {
+                // Clear the canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Starting parameters for the trunk
+                const startX = canvas.width / 2;
+                const startY = canvas.height; // Start from the bottom middle
+                const initialLength = canvas.height / 4.5; // Adjust initial length based on canvas height
+                const initialAngle = -Math.PI / 2; // Pointing upwards
+
+                // Start drawing the tree
+                drawBranch(startX, startY, initialLength, initialAngle, currentDepth);
+                canvas.dataset.drawn = "true"; // Mark canvas as drawn
+                showMessage("Tree grown successfully!", "success");
+            } catch (error) {
+                console.error("Error drawing tree:", error);
+                showMessage("Oops! Something went wrong while growing the tree.", "error");
+            }
+        }
+        
+        // Function to display messages
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = type; // 'success' or 'error'
+            // Automatically clear message after 5 seconds
+            setTimeout(() => {
+                messageBox.textContent = '';
+                messageBox.className = '';
+            }, 5000);
+        }
+
+
+        // Event listeners for controls
+        angleSlider.addEventListener('input', (e) => {
+            currentAngle = parseFloat(e.target.value);
+            angleValueSpan.textContent = currentAngle;
+        });
+
+        depthSlider.addEventListener('input', (e) => {
+            currentDepth = parseInt(e.target.value);
+            depthValueSpan.textContent = currentDepth;
+        });
+
+        lengthFactorSlider.addEventListener('input', (e) => {
+            currentLengthFactor = parseFloat(e.target.value);
+            lengthFactorValueSpan.textContent = currentLengthFactor.toFixed(2);
+        });
+        
+        trunkColorPicker.addEventListener('input', (e) => {
+            currentTrunkColor = e.target.value;
+        });
+
+        leafColorPicker.addEventListener('input', (e) => {
+            currentLeafColor = e.target.value;
+        });
+
+        drawButton.addEventListener('click', () => {
+            // Ensure canvas is sized before drawing
+            if (canvas.width === 0 || canvas.height === 0) { // Check if canvas has dimensions
+                 resizeCanvas(); // Set initial size if not already set by resize event
+            }
+            drawTree();
+        });
+
+        // Initial setup
+        window.addEventListener('load', () => {
+            // Set initial values for display spans
+            angleValueSpan.textContent = angleSlider.value;
+            depthValueSpan.textContent = depthSlider.value;
+            lengthFactorValueSpan.textContent = parseFloat(lengthFactorSlider.value).toFixed(2);
+            
+            resizeCanvas(); // Set initial canvas size
+            // Optionally draw a tree on load:
+            // drawTree(); 
+        });
+        
+        // Resize canvas when window size changes
+        window.addEventListener('resize', resizeCanvas);
+
+    </script>
+</body>
+</html>
